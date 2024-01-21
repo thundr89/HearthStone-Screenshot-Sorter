@@ -20,7 +20,7 @@ namespace HearthStone_Screenshot_Sorter
         private FolderBrowserDialog folderBrowser;
         private StreamWriter logFile;
         private static string DesktopDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-        private string StoreDir = Path.Combine(DesktopDir, "HearthStone Screenshots");
+        private static string StoreDir = Path.Combine(DesktopDir, "HearthStone Screenshots");
 
         [STAThread]
         public static void Main()
@@ -50,7 +50,7 @@ namespace HearthStone_Screenshot_Sorter
 
             timer = new Timer();
             timer.Interval = 1800000; // Fél óránként fut le
-            timer.Tick += SortScreenshots;
+            timer.Tick += TimerAction;
             timer.Start();
         }
 
@@ -64,7 +64,7 @@ namespace HearthStone_Screenshot_Sorter
 
         private void OnSortNow(object sender, EventArgs e)
         {
-            SortScreenshots(sender, e);
+            TimerAction(sender, e);
             //MessageBox.Show("A képernyőképek rendezése megtörtént!");
             trayIcon.ShowBalloonTip(3000, "Hearthstone képernyőkép rendező", "A képernyőképek rendezése megtörtént!", ToolTipIcon.Info);
         }
@@ -73,7 +73,7 @@ namespace HearthStone_Screenshot_Sorter
         {
             if (folderBrowser.ShowDialog() == DialogResult.OK)
             {
-                MoveAndSortScreenshots(folderBrowser.SelectedPath);
+                TrayAction(folderBrowser.SelectedPath);
                 trayIcon.ShowBalloonTip(3000, "Hearthstone képernyőkép rendező", "A képernyőképek rendezése megtörtént!", ToolTipIcon.Info);
             }
         }
@@ -93,11 +93,17 @@ namespace HearthStone_Screenshot_Sorter
 
             base.Dispose(isDisposing);
         }
-
-        private void MoveAndSortScreenshots(string sourcePath)
+        private void TrayAction(string sourcePath)
         {
-            var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            var targetPath = Path.Combine(desktopPath, "HearthStone Screenshots");
+            SharedAction(sourcePath, false);
+        }
+        private void old_TrayAction(string sourcePath)
+        {
+            //var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            //var targetPath = Path.Combine(desktopPath, "HearthStone Screenshots");
+            var desktopPath = DesktopDir;
+            var targetPath = StoreDir;
+            
             var dirInfo = new DirectoryInfo(sourcePath);
 
             var files = dirInfo.GetFiles("Hearthstone Screenshot *.png")
@@ -148,9 +154,14 @@ namespace HearthStone_Screenshot_Sorter
             logFile.Close();
         }
 
-        private void SortScreenshots(object sender, EventArgs e)
+        private void TimerAction(object sender, EventArgs e)
         {
-            var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            SharedAction(DesktopDir);
+        }
+        private void old_TimerAction(object sender, EventArgs e)
+        {
+            //var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            var desktopPath = DesktopDir;
             var dirInfo = new DirectoryInfo(desktopPath);
 
             var files = dirInfo.GetFiles("Hearthstone Screenshot *.png")
@@ -192,5 +203,80 @@ namespace HearthStone_Screenshot_Sorter
                 }
             }
         }
+
+        private void SharedAction(string sourcePath, bool timed = true)
+        {
+            //var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            //var targetPath = Path.Combine(desktopPath, "HearthStone Screenshots");
+            //var desktopPath = DesktopDir;
+            //var targetPath = StoreDir;
+
+            // Log fájl létrehozása a célmappában
+            logFile = new StreamWriter(Path.Combine(StoreDir, "log.txt"), true);
+
+            if (timed)
+            {
+                logFile.WriteLine($"Timed sorting started on: {DateTime.Now}");
+            }
+            else
+            {
+                logFile.WriteLine($"Manual sorting started on: {DateTime.Now}");
+            }
+
+            var dirInfo = new DirectoryInfo(sourcePath);
+
+            var files = dirInfo.GetFiles("Hearthstone Screenshot *.png")
+                   .OrderBy(f => f.Name.Split(' ')[2])
+                   .ToList();
+
+            if (files.Count > 0)
+            {
+                // Biztonsági másolat készítése
+                var backupPath = Path.Combine(StoreDir, $"Backup_{DateTime.Now:yyyyMMdd_HHmmss}.zip");
+                using (var archive = ZipFile.Open(backupPath, ZipArchiveMode.Create))
+                {
+                    foreach (var file in files)
+                    {
+                        archive.CreateEntryFromFile(file.FullName, file.Name);
+                    }
+                }
+
+                for (int i = 0; i < files.Count; i++)
+                {
+                    var creationTime = files[i].CreationTime;
+                    var year = creationTime.Year.ToString();
+                    var month = creationTime.Month.ToString("D2");
+                    var day = creationTime.Day.ToString("D2");
+                    var hour = creationTime.Hour.ToString("D2");
+                    var minute = creationTime.Minute.ToString("D2");
+                    var second = creationTime.Second.ToString("D2");
+
+                    var yearMonthPath = Path.Combine(StoreDir, year, month);
+
+                    // Ha a mappa még nem létezik, akkor létrehozzuk
+                    if (!Directory.Exists(yearMonthPath))
+                    {
+                        Directory.CreateDirectory(yearMonthPath);
+                    }
+
+                    var newPath = Path.Combine(yearMonthPath, $"Hearthstone Screenshot {month}-{day}-{year} {hour}.{minute}.{second}.png");
+                    if (files[i].FullName != newPath)
+                    {
+                        File.Move(files[i].FullName, newPath);
+                        // Logolás
+                        logFile.WriteLine($"[{DateTime.Now}] {files[i].FullName} -> {newPath}");
+                        logFile.Flush();
+                    }
+                }
+            }
+            else
+            {
+                logFile.WriteLine($"No new file to short");
+                logFile.Flush();
+            }
+            // Log fájl bezárása
+            logFile.Close();
+        }
+
     }
 }
