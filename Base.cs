@@ -27,6 +27,7 @@ namespace HearthStone_Screenshot_Sorter
         private static string DesktopDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         private static string StoreDir = Path.Combine(DesktopDir, "HearthStone Screenshots");
         private static string Log = Path.Combine(StoreDir, "log.txt");
+        private static string Zip = Path.Combine(StoreDir, $"Backup_{DateTime.Now:yyyyMMdd_HHmmss}.zip");
 
         [STAThread]
         public static void Main()
@@ -48,7 +49,6 @@ namespace HearthStone_Screenshot_Sorter
             // Create a tray icon.
             trayIcon = new NotifyIcon();
             trayIcon.Text = "Hearthstone képernyőkép rendező";
-            //trayIcon.Icon = new Icon(SystemIcons.Application, 40, 40);
             trayIcon.Icon = new Icon(Properties.Resources.main, 40, 40);
 
             // Add menu to tray icon and show it.
@@ -72,7 +72,6 @@ namespace HearthStone_Screenshot_Sorter
         private void OnSortNow(object sender, EventArgs e)
         {
             TimerAction(sender, e);
-            //MessageBox.Show("A képernyőképek rendezése megtörtént!");
             trayIcon.ShowBalloonTip(3000, "Hearthstone képernyőkép rendező", "A képernyőképek rendezése megtörtént!", ToolTipIcon.Info);
         }
 
@@ -123,7 +122,7 @@ namespace HearthStone_Screenshot_Sorter
                 File.Create(Log);
             }
 
-            logFile = new StreamWriter(Path.Combine(StoreDir, "log.txt"), true);
+            logFile = new StreamWriter(Log, true);
 
             if (timed)
             {
@@ -134,6 +133,7 @@ namespace HearthStone_Screenshot_Sorter
                 logFile.WriteLine($"Manual sorting started on: {DateTime.Now}");
             }
             logFile.Flush();
+
             var dirInfo = new DirectoryInfo(sourcePath);
 
             var files = dirInfo.GetFiles("Hearthstone Screenshot *.png")
@@ -143,8 +143,7 @@ namespace HearthStone_Screenshot_Sorter
             if (files.Count > 0)
             {
                 // Biztonsági másolat készítése
-                var backupPath = Path.Combine(StoreDir, $"Backup_{DateTime.Now:yyyyMMdd_HHmmss}.zip");
-                using (var archive = ZipFile.Open(backupPath, ZipArchiveMode.Create))
+                using (var archive = ZipFile.Open(Zip, ZipArchiveMode.Create))
                 {
                     foreach (var file in files)
                     {
@@ -182,10 +181,12 @@ namespace HearthStone_Screenshot_Sorter
             }
             else
             {
-                logFile.WriteLine($"No new file to short");
+                logFile.WriteLine($"No file to short");
                 logFile.Flush();
             }
             // Log fájl bezárása
+            logFile.WriteLine($"Ended on: {DateTime.Now}");
+            logFile.Flush();
             logFile.Close();
         }
     }
