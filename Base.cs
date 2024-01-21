@@ -97,120 +97,14 @@ namespace HearthStone_Screenshot_Sorter
         {
             SharedAction(sourcePath, false);
         }
-        private void old_TrayAction(string sourcePath)
-        {
-            //var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            //var targetPath = Path.Combine(desktopPath, "HearthStone Screenshots");
-            var desktopPath = DesktopDir;
-            var targetPath = StoreDir;
-            
-            var dirInfo = new DirectoryInfo(sourcePath);
-
-            var files = dirInfo.GetFiles("Hearthstone Screenshot *.png")
-                   .OrderBy(f => f.Name.Split(' ')[2])
-                   .ToList();
-
-            // Biztonsági másolat készítése
-            var backupPath = Path.Combine(desktopPath, $"Backup_{DateTime.Now:yyyyMMdd_HHmmss}.zip");
-            using (var archive = ZipFile.Open(backupPath, ZipArchiveMode.Create))
-            {
-                foreach (var file in files)
-                {
-                    archive.CreateEntryFromFile(file.FullName, file.Name);
-                }
-            }
-
-            // Log fájl létrehozása a célmappában
-            logFile = new StreamWriter(Path.Combine(targetPath, "log.txt"), true);
-
-            for (int i = 0; i < files.Count; i++)
-            {
-                var creationTime = files[i].CreationTime;
-                var year = creationTime.Year.ToString();
-                var month = creationTime.Month.ToString("D2");
-                var day = creationTime.Day.ToString("D2");
-                var hour = creationTime.Hour.ToString("D2");
-                var minute = creationTime.Minute.ToString("D2");
-                var second = creationTime.Second.ToString("D2");
-
-                var yearMonthPath = Path.Combine(targetPath, year, month);
-
-                // Ha a mappa még nem létezik, akkor létrehozzuk
-                if (!Directory.Exists(yearMonthPath))
-                {
-                    Directory.CreateDirectory(yearMonthPath);
-                }
-
-                var newPath = Path.Combine(yearMonthPath, $"Hearthstone Screenshot {month}-{day}-{year} {hour}.{minute}.{second}.png");
-                if (files[i].FullName != newPath)
-                {
-                    File.Move(files[i].FullName, newPath);
-                    // Logolás
-                    logFile.WriteLine($"[{DateTime.Now}] {files[i].FullName} -> {newPath}");
-                    logFile.Flush();
-                }
-            }
-            // Log fájl bezárása
-            logFile.Close();
-        }
 
         private void TimerAction(object sender, EventArgs e)
         {
             SharedAction(DesktopDir);
         }
-        private void old_TimerAction(object sender, EventArgs e)
-        {
-            //var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            var desktopPath = DesktopDir;
-            var dirInfo = new DirectoryInfo(desktopPath);
-
-            var files = dirInfo.GetFiles("Hearthstone Screenshot *.png")
-                   .OrderBy(f => f.Name.Split(' ')[2])
-                   .ToList();
-
-            // Biztonsági másolat készítése
-            var backupPath = Path.Combine(desktopPath, $"Backup_{DateTime.Now:yyyyMMdd_HHmmss}.zip");
-            using (var archive = ZipFile.Open(backupPath, ZipArchiveMode.Create))
-            {
-                foreach (var file in files)
-                {
-                    archive.CreateEntryFromFile(file.FullName, file.Name);
-                }
-            }
-
-            for (int i = 0; i < files.Count; i++)
-            {
-                var creationTime = files[i].CreationTime;
-                var year = creationTime.Year.ToString();
-                var month = creationTime.Month.ToString("D2");
-                var day = creationTime.Day.ToString("D2");
-                var hour = creationTime.Hour.ToString("D2");
-                var minute = creationTime.Minute.ToString("D2");
-                var second = creationTime.Second.ToString("D2");
-
-                var yearMonthPath = Path.Combine(desktopPath, year, month);
-
-                // Ha a mappa még nem létezik, akkor létrehozzuk
-                if (!Directory.Exists(yearMonthPath))
-                {
-                    Directory.CreateDirectory(yearMonthPath);
-                }
-
-                var newPath = Path.Combine(yearMonthPath, $"Hearthstone Screenshot {month}-{day}-{year} {hour}.{minute}.{second}.png");
-                if (files[i].FullName != newPath)
-                {
-                    File.Move(files[i].FullName, newPath);
-                }
-            }
-        }
 
         private void SharedAction(string sourcePath, bool timed = true)
         {
-            //var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            //var targetPath = Path.Combine(desktopPath, "HearthStone Screenshots");
-            //var desktopPath = DesktopDir;
-            //var targetPath = StoreDir;
-
             // Log fájl létrehozása a célmappában
             logFile = new StreamWriter(Path.Combine(StoreDir, "log.txt"), true);
 
