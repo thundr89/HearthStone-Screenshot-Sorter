@@ -20,7 +20,7 @@ namespace HearthStone_Screenshot_Sorter
         private FolderBrowserDialog folderBrowser;
         private StreamWriter logFile;
         private static string DesktopDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-        private string StoreDir = Path.Combine(DesktopDir, "HearthStone Screenshots");
+        private static string StoreDir = Path.Combine(DesktopDir, "HearthStone Screenshots");
 
         [STAThread]
         public static void Main()
@@ -96,8 +96,11 @@ namespace HearthStone_Screenshot_Sorter
 
         private void MoveAndSortScreenshots(string sourcePath)
         {
-            var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            var targetPath = Path.Combine(desktopPath, "HearthStone Screenshots");
+            //var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            //var targetPath = Path.Combine(desktopPath, "HearthStone Screenshots");
+            var desktopPath = DesktopDir;
+            var targetPath = StoreDir;
+            
             var dirInfo = new DirectoryInfo(sourcePath);
 
             var files = dirInfo.GetFiles("Hearthstone Screenshot *.png")
@@ -150,7 +153,8 @@ namespace HearthStone_Screenshot_Sorter
 
         private void SortScreenshots(object sender, EventArgs e)
         {
-            var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            //var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            var desktopPath = DesktopDir;
             var dirInfo = new DirectoryInfo(desktopPath);
 
             var files = dirInfo.GetFiles("Hearthstone Screenshot *.png")
