@@ -188,6 +188,5 @@ namespace HearthStone_Screenshot_Sorter
             // Log fájl bezárása
             logFile.Close();
         }
-
     }
 }
