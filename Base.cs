@@ -1,4 +1,9 @@
-﻿using System;
+﻿/*
+ 
+icon from https://icon-library.com/icon/hearthstone-icon-3.html
+
+ */
+using System;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -21,6 +26,7 @@ namespace HearthStone_Screenshot_Sorter
         private StreamWriter logFile;
         private static string DesktopDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         private static string StoreDir = Path.Combine(DesktopDir, "HearthStone Screenshots");
+        private static string Log = Path.Combine(StoreDir, "log.txt");
 
         [STAThread]
         public static void Main()
@@ -33,8 +39,8 @@ namespace HearthStone_Screenshot_Sorter
             // Create a simple tray menu with only one item.
             trayMenu = new ContextMenu();
             trayMenu.MenuItems.Add("Rendszerezés most", OnSortNow);
-            trayMenu.MenuItems.Add("Kilépés", OnExit);
             trayMenu.MenuItems.Add("Mappa kiválasztása", OnSelectFolder);
+            trayMenu.MenuItems.Add("Kilépés", OnExit);
 
             folderBrowser = new FolderBrowserDialog();
 
@@ -42,7 +48,8 @@ namespace HearthStone_Screenshot_Sorter
             // Create a tray icon.
             trayIcon = new NotifyIcon();
             trayIcon.Text = "Hearthstone képernyőkép rendező";
-            trayIcon.Icon = new Icon(SystemIcons.Application, 40, 40);
+            //trayIcon.Icon = new Icon(SystemIcons.Application, 40, 40);
+            trayIcon.Icon = new Icon(Properties.Resources.main, 40, 40);
 
             // Add menu to tray icon and show it.
             trayIcon.ContextMenu = trayMenu;
@@ -105,7 +112,17 @@ namespace HearthStone_Screenshot_Sorter
 
         private void SharedAction(string sourcePath, bool timed = true)
         {
+
+            if (!Directory.Exists(StoreDir))
+            {
+                Directory.CreateDirectory(StoreDir);
+            }
             // Log fájl létrehozása a célmappában
+            if (!File.Exists(Log))
+            {
+                File.Create(Log);
+            }
+
             logFile = new StreamWriter(Path.Combine(StoreDir, "log.txt"), true);
 
             if (timed)
@@ -116,7 +133,7 @@ namespace HearthStone_Screenshot_Sorter
             {
                 logFile.WriteLine($"Manual sorting started on: {DateTime.Now}");
             }
-
+            logFile.Flush();
             var dirInfo = new DirectoryInfo(sourcePath);
 
             var files = dirInfo.GetFiles("Hearthstone Screenshot *.png")
